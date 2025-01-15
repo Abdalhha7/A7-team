@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A7 - تعريف</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+    <title>A7 - تجربة فريدة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
     <style>
-        /* إعدادات أساسية */
         * {
             margin: 0;
             padding: 0;
@@ -16,180 +19,641 @@
         }
 
         body {
-            background: radial-gradient(circle, #440000, #220000);
+            background: linear-gradient(135deg, #1a1a1a, #000);
             color: #fff;
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        body.blue-mode {
+            background: linear-gradient(135deg, #0a192f, #000);
+            color: #fff;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* زر الشريط الجانبي */
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #ff6f61;
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        /* الشريط الجانبي */
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-            animation: gradientBackground 10s infinite alternate;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            right: -250px;
+            transition: right 0.5s ease;
         }
 
-        @keyframes gradientBackground {
-            0% { background: radial-gradient(circle, #440000, #220000); }
-            100% { background: radial-gradient(circle, #220000, #440000); }
+        .sidebar.active {
+            right: 0;
         }
 
-        /* تصميم الشعار */
-        .logo {
-            width: 120px;
-            height: 120px;
+        .sidebar .logo {
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 5px solid #ff4500;
+            border: 3px solid #ff6f61;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .sidebar.blue-mode .logo {
+            border-color: #00bcd4;
+        }
+
+        .sidebar .logo:hover {
+            transform: rotate(360deg) scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 111, 97, 0.7);
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .sidebar nav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 10px;
+            border-radius: 10px;
+            transition: background 0.3s ease, transform 0.3s ease;
+            text-align: center;
+        }
+
+        .sidebar nav a:hover {
+            background: rgba(255, 111, 97, 0.2);
+            transform: translateX(-10px);
+        }
+
+        .sidebar.blue-mode nav a:hover {
+            background: rgba(0, 188, 212, 0.2);
+        }
+
+        /* زر تسجيل الدخول في الشريط الجانبي */
+        .sidebar .login-button {
+            background: linear-gradient(135deg, #ff6f61, #ff3b2f);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
             margin-top: 20px;
-            animation: spin 8s linear infinite;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 111, 97, 0.4);
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .sidebar .login-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 111, 97, 0.7);
         }
 
-        /* تصميم البطاقة */
+        .sidebar.blue-mode .login-button {
+            background: linear-gradient(135deg, #00bcd4, #0097a7);
+            box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
+        }
+
+        .sidebar.blue-mode .login-button:hover {
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.7);
+        }
+
+        /* زر تغيير اللون */
+        .theme-toggle {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #ff6f61;
+            cursor: pointer;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        .theme-toggle.blue-mode {
+            color: #00bcd4;
+        }
+
+        /* المحتوى الرئيسي */
+        .main-content {
+            margin-left: 0;
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         .card {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             padding: 30px;
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
             text-align: center;
             transition: transform 0.5s ease, box-shadow 0.5s ease;
-            animation: fadeIn 1.5s ease;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .card:hover {
-            transform: scale(1.08);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px rgba(255, 111, 97, 0.7);
+        }
+
+        .card.blue-mode:hover {
+            box-shadow: 0 20px 50px rgba(0, 188, 212, 0.7);
         }
 
         .card h1 {
             font-size: 2rem;
             margin: 20px 0 10px;
-            color: #ff4500;
+            color: #ff6f61;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .card.blue-mode h1 {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
         }
 
         .card p {
-            font-size: 1.1rem;
-            color: #ddd;
+            font-size: 1rem;
+            color: #ccc;
             margin-bottom: 20px;
+        }
+
+        .card.blue-mode p {
+            color: #b0bec5;
         }
 
         .social-icons {
             display: flex;
             justify-content: center;
-            gap: 25px;
-            margin-bottom: 25px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .social-icons a {
-            color: #ff4500;
+            color: #ff6f61;
             font-size: 2rem;
             transition: color 0.3s ease, transform 0.3s ease;
             text-decoration: none;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .social-icons.blue-mode a {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
         }
 
         .social-icons a:hover {
-            color: #ff0000;
+            color: #ff3b2f;
             transform: scale(1.3);
         }
 
+        .social-icons.blue-mode a:hover {
+            color: #0097a7;
+        }
+
         .follow-btn {
-            background: #ff4500;
-            color: #111;
+            background: linear-gradient(135deg, #ff6f61, #ff3b2f);
+            color: #fff;
             padding: 15px 40px;
             border: none;
             border-radius: 30px;
             font-size: 1.2rem;
             cursor: pointer;
-            transition: background 0.3s ease, transform 0.3s ease;
-            box-shadow: 0 5px 15px rgba(255, 69, 0, 0.6);
-            margin: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 111, 97, 0.4);
+        }
+
+        .follow-btn.blue-mode {
+            background: linear-gradient(135deg, #00bcd4, #0097a7);
+            box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
         }
 
         .follow-btn:hover {
-            background: #ff0000;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 111, 97, 0.7);
+        }
+
+        .follow-btn.blue-mode:hover {
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.7);
+        }
+
+        .more-info {
+            margin-top: 25px;
+            font-size: 1rem;
+            color: #ff6f61;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .more-info.blue-mode {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
+        }
+
+        .more-info:hover {
+            color: #ff3b2f;
             transform: scale(1.1);
         }
 
-        /* أقسام المعلومات */
-        .section-content {
-            display: none;
-            max-width: 800px;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-            text-align: center;
-            margin-top: 20px;
-            color: #ddd;
+        .more-info.blue-mode:hover {
+            color: #0097a7;
         }
 
-        .section-content.active {
-            display: block;
+        .arrow-down {
+            font-size: 2rem;
+            color: #ff6f61;
+            margin-top: 5px;
+            transition: transform 0.3s ease;
+            animation: bounce 1.5s infinite;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .arrow-down.blue-mode {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
+        }
+
+        .team-info {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s ease, transform 1s ease;
+            max-width: 800px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 50px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .team-info.blue-mode {
+            background: rgba(0, 188, 212, 0.1);
+            border: 1px solid rgba(0, 188, 212, 0.2);
+        }
+
+        .team-info h2 {
+            font-size: 2rem;
+            color: #ff6f61;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .team-info.blue-mode h2 {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
+        }
+
+        .team-info p {
+            font-size: 1rem;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .team-info.blue-mode p {
+            color: #b0bec5;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: #ff6f61;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+            animation: fadeIn 1s forwards;
+        }
+
+        .overlay.blue-mode {
+            color: #00bcd4;
+        }
+
+        .overlay a {
+            background: linear-gradient(135deg, #ff6f61, #ff3b2f);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 111, 97, 0.4);
+        }
+
+        .overlay.blue-mode a {
+            background: linear-gradient(135deg, #00bcd4, #0097a7);
+            box-shadow: 0 5px 15px rgba(0, 188, 212, 0.4);
+        }
+
+        .overlay a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 111, 97, 0.7);
+        }
+
+        .overlay.blue-mode a:hover {
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.7);
+        }
+
+        .overlay p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .overlay.blue-mode p {
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            color: #ff6f61;
+            cursor: pointer;
+            text-shadow: 0 0 10px rgba(255, 111, 97, 0.7);
+        }
+
+        .close-btn.blue-mode {
+            color: #00bcd4;
+            text-shadow: 0 0 10px rgba(0, 188, 212, 0.7);
         }
 
         .footer {
             position: fixed;
             bottom: 10px;
+            right: 20px;
             font-size: 0.8rem;
             color: #888;
+            z-index: 10;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        .show-info {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
         }
     </style>
 </head>
 <body>
-    <!-- الشعار -->
-    <img src="https://i.ibb.co/p0T7Dyy/F6-C7-A34-E-6-ADF-409-A-9-DCB-EB077896589-E.png" alt="A7 Logo" class="logo">
+    <!-- زر الشريط الجانبي -->
+    <div class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
 
-    <!-- بطاقة الفريق -->
-    <div class="card">
-        <h1>A7team</h1>
-        <p>مجموعة من المصممين المحترفين لسيرفر "Respect"</p>
-        
-        <div class="social-icons">
-            <a href="https://x.com/TeamA7op?t=a9xxVo8BX-ndQzSPgHnhUw&s=09" target="_blank">&#xf099; تويتر</a>
-            <a href="https://discord.gg/a7tm" target="_blank">&#xf16d; ديسكورد</a>
+    <!-- زر تغيير اللون -->
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-sun"></i>
+    </div>
+
+    <!-- الشريط الجانبي -->
+    <div class="sidebar">
+        <img src="https://i.ibb.co/1913TKZ/F6-C7-A34-E-6-ADF-409-A-9-DCB-EB077896589-E.png" alt="A7 Logo" class="logo">
+        <nav>
+            <a href="#home">الرئيسية</a>
+            <a href="#about">من نحن</a>
+            <a href="#services">خدماتنا</a>
+            <a href="#portfolio">معرض الأعمال</a>
+            <a href="#testimonials">آراء العملاء</a>
+            <a href="#contact">تواصل معنا</a>
+        </nav>
+        <!-- زر تسجيل الدخول في الشريط الجانبي -->
+        <button class="login-button" onclick="signInWithGoogle()">تسجيل الدخول باستخدام Google</button>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <div class="card">
+            <h1>A7team</h1>
+            <p>مجموعة من المصممين المحترفين لسيرفر "Respect"</p>
+            
+            <div class="social-icons">
+                <a href="https://x.com/TeamA7op?t=a9xxVo8BX-ndQzSPgHnhUw&s=09" target="_blank">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://discord.gg/a7tm" target="_blank">
+                    <i class="fab fa-discord"></i>
+                </a>
+            </div>
+            
+            <button class="follow-btn" onclick="showFollowPage()">متابعة</button>
+            
+            <div class="more-info" onclick="showTeamInfo()">
+                تعرف على المزيد
+                <span class="arrow-down">&#8595;</span>
+            </div>
         </div>
-        
-        <button class="follow-btn" onclick="showContent('whoWeAre')">من نحن</button>
-        <button class="follow-btn" onclick="showContent('resources')">ماذا نقدم</button>
-        <button class="follow-btn" onclick="showContent('joinTeam')">التقديم للتيم</button>
+
+        <div class="team-info" id="teamInfo">
+            <h2>من نحن</h2>
+            <p>تيم A7 هو مجموعة من المصممين المحترفين في مجال التصميم والإبداع، يسعون لإثراء عالم التصميم بأفكار فريدة ومبتكرة.</p>
+        </div>
     </div>
 
-    <!-- قسم "من نحن" -->
-    <div class="section-content" id="whoWeAre">
-        <h2>من نحن</h2>
-        <p>تيم A7 هو مجموعة من المصممين المحترفين في مجال التصميم والإبداع، يسعون لإثراء عالم التصميم بأفكار فريدة ومبتكرة.</p>
+    <!-- صفحة المتابعة -->
+    <div class="overlay" id="followPage">
+        <span class="close-btn" onclick="hideFollowPage()">×</span>
+        <p>انضم إلى سيرفر الديسكورد الخاص بــ تيم A7:</p>
+        <a href="https://discord.gg/a7tm" target="_blank">رابط الديسكورد</a>
     </div>
-
-    <!-- قسم "ماذا نقدم" -->
-    <div class="section-content" id="resources">
-        <h2>ماذا نقدم</h2>
-        <p>نقدم للمصممين مجموعة من الملحقات والمقتطفات المجانية، التي تساعدهم في إبداع تصاميم فريدة واحترافية.</p>
-    </div>
-
-    <!-- قسم "التقديم للتيم" -->
-    <div class="section-content" id="joinTeam">
-        <h2>التقديم للتيم</h2>
-        <p>للانضمام إلى فريق A7، يمكنك فتح تذكرة عبر ديسكورد وإرسال نماذج من أعمالك وملف تعريفي عنك.</p>
-        <a href="https://discord.gg/a7tm" target="_blank">افتح تذكرة في ديسكورد</a>
-    </div>
-
+    
     <!-- حقوق المطور -->
     <div class="footer">
-        <p>© 2024 تصميم وتطوير بواسطة MK7</p>
+        <p>© 2024 تصميم وتطوير بواسطة MK7 </p>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkM4e_Z4bnZ_4DsgSBZ_0Ldwmrt8jyPUU",
+            authDomain: "a7-project-d6e82.firebaseapp.com",
+            projectId: "a7-project-d6e82",
+            storageBucket: "a7-project-d6e82.firebasestorage.app",
+            messagingSenderId: "567371041227",
+            appId: "1:567371041227:web:0847eb671430ee541cce4e",
+            measurementId: "G-K9JSJVZC3Q"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // تسجيل الدخول باستخدام Google
+        function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    if (user.email === "abdalhnajm1@gmail.com") {
+                        alert("مرحبًا المطور! يمكنك الآن التعديل على الموقع.");
+                        enableEditMode();
+                    } else {
+                        alert("مرحبًا! أنت لست المطور.");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error signing in with Google:", error);
+                });
+        }
+
+        // تمكين وضع التعديل
+        function enableEditMode() {
+            const editButton = document.createElement('button');
+            editButton.innerText = 'تعديل';
+            editButton.style.position = 'fixed';
+            editButton.style.bottom = '20px';
+            editButton.style.right = '20px';
+            editButton.style.zIndex = '1000';
+            editButton.style.backgroundColor = '#ff6f61';
+            editButton.style.color = '#fff';
+            editButton.style.border = 'none';
+            editButton.style.padding = '10px 20px';
+            editButton.style.borderRadius = '5px';
+            editButton.style.cursor = 'pointer';
+            editButton.onclick = () => {
+                document.body.contentEditable = true;
+                alert("يمكنك الآن التعديل على النصوص في الموقع!");
+            };
+
+            document.body.appendChild(editButton);
+        }
+    </script>
+
     <script>
-        // دالة لإظهار القسم المحدد وإخفاء الباقي
-        function showContent(sectionId) {
-            const sections = document.querySelectorAll('.section-content');
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionId).classList.add('active');
+        // Three.js Scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Light
+        const light = new THREE.PointLight(0xff6f61, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        // Sphere
+        const geometry = new THREE.SphereGeometry(5, 32, 32);
+        const material = new THREE.MeshPhongMaterial({ color: 0xff6f61, wireframe: true });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        camera.position.z = 15;
+
+        // Animation
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.x += 0.01;
+            sphere.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // GSAP Animations
+        gsap.from(".logo", { duration: 1, y: -50, opacity: 0, ease: "power2.out" });
+        gsap.from(".card", { duration: 1, y: 50, opacity: 0, ease: "power2.out", delay: 0.3 });
+
+        // Functions
+        function showTeamInfo() {
+            document.getElementById('teamInfo').classList.toggle('show-info');
+        }
+
+        function showFollowPage() {
+            document.getElementById('followPage').style.display = 'flex';
+        }
+
+        function hideFollowPage() {
+            document.getElementById('followPage').style.display = 'none';
+        }
+
+        // تبديل الشريط الجانبي
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // تبديل اللون (أحمر/أزرق)
+        function toggleTheme() {
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
+            body.classList.toggle('blue-mode');
+
+            if (body.classList.contains('blue-mode')) {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                themeToggle.classList.add('blue-mode');
+                light.color.set(0x00bcd4);
+                material.color.set(0x00bcd4);
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                themeToggle.classList.remove('blue-mode');
+                light.color.set(0xff6f61);
+                material.color.set(0xff6f61);
+            }
         }
     </script>
 </body>
